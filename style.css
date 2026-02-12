@@ -1,13 +1,13 @@
 /* Основные стили */
 :root {
-    --tg-theme-bg-color: #17212b;
-    --tg-theme-text-color: #ffffff;
+    --tg-theme-bg-color: #ffffff;
+    --tg-theme-text-color: #000000;
     --primary-color: #3498db;
     --secondary-color: #2ecc71;
     --x-color: #e74c3c;
     --o-color: #f1c40f;
-    --border-color: #34495e;
-    --hover-color: #3d566e;
+    --border-color: #bdc3c7;
+    --hover-color: #ecf0f1;
 }
 
 body {

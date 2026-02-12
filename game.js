@@ -169,7 +169,7 @@ function endGame(message) {
 // Сброс игры
 function resetGame() {
     board = ['', '', '', '', '', '', '', '', ''];
-    gameActive = false;
+    gameActive = true;  // Теперь устанавливаем в true при начале новой игры
     currentPlayer = 'X';
     isMyTurn = true;
     
@@ -185,6 +185,18 @@ function resetGame() {
     
     // Скрываем Game ID при сбросе
     document.getElementById('gameIdSection').classList.add('hidden');
+    
+    // Рандомно определяем первого игрока при новой игре
+    if (currentMode === 'offline') {
+        const isFirstPlayer = Math.random() < 0.5;
+        currentPlayer = isFirstPlayer ? 'X' : 'O';
+    } else {
+        const isFirstPlayer = Math.random() < 0.5;
+        currentPlayer = isFirstPlayer ? 'X' : 'O';
+        playerSymbol = isFirstPlayer ? 'X' : 'O';
+        opponentSymbol = isFirstPlayer ? 'O' : 'X';
+        isMyTurn = (currentPlayer === playerSymbol);
+    }
     
     updateStatus();
 }
