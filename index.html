@@ -17,26 +17,23 @@
                 <button onclick="copyGameId()">📋 Копировать ID</button>
             </div>
         </div>
-        
+
         <div id="modeSelector">
             <h2>Выберите режим игры:</h2>
             <div class="mode-buttons">
                 <button class="mode-btn" onclick="setMode('online')">🌐 Онлайн</button>
-                <button class="mode-btn" onclick="setMode('offline')">📱 Офлайн</button>
+                <button class="mode-btn" onclick="setMode('offline')">📱 Оффлайн</button>
             </div>
         </div>
-        
+
         <div id="onlineSetup" class="hidden setup-section">
-            <h2>Онлайн режим</h2>
+            <h2>Введите ID игры:</h2>
             <div id="joinSection">
                 <input type="text" id="playerIdInput" placeholder="Введите ID второго игрока (6 цифр)" maxlength="6">
                 <button onclick="joinGame()">Продолжить</button>
             </div>
-            <div id="hostSection">
-                <button onclick="createGame()" class="admin-btn">Я администратор комнаты</button>
-            </div>
         </div>
-        
+
         <div id="gameBoard" class="hidden">
             <div class="status" id="status">Ход: X</div>
             <div class="board" id="board">
@@ -52,7 +49,7 @@
             </div>
             <button onclick="resetGame()" class="reset-btn">Новая игра</button>
         </div>
-        
+
         <div id="resultModal" class="modal hidden">
             <div class="modal-content">
                 <h2 id="resultText"></h2>
