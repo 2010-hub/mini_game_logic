@@ -1,7 +1,6 @@
-/* Основные стили */
 :root {
     --tg-theme-bg-color: #ffffff;
-    --tg-theme-text-color: #ffffff;
+    --tg-theme-text-color: #000000;
     --primary-color: #3498db;
     --secondary-color: #2ecc71;
     --x-color: #e74c3c;
@@ -89,14 +88,14 @@ body {
     margin: 10px 0;
     border: 2px solid var(--border-color);
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: #ffffff; /* Белый фон для контраста */
+    color: #000000; /* Чёрный цвет текста */
     font-size: 16px;
     box-sizing: border-box;
 }
 
 #playerIdInput::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+    color: #95a5a6; /* Серый цвет для плейсхолдера */
 }
 
 .admin-btn {
@@ -130,7 +129,8 @@ body {
 
 .cell {
     aspect-ratio: 1;
-    background: rgba(255, 255, 255, 0.1);
+    background: #ffffff;
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     display: flex;
     justify-content: center;
@@ -248,11 +248,11 @@ body {
         margin: 10px;
         padding: 20px;
     }
-    
+
     .cell {
         font-size: 32px;
     }
-    
+
     .status {
         font-size: 18px;
     }
