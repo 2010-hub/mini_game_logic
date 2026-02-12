@@ -3,11 +3,13 @@ let currentMode = '';
 let currentPlayer = 'X';
 let board = ['', '', '', '', '', '', '', '', ''];
 let gameActive = false;
-let playerSymbol = 'X'; // Символ текущего игрока
-let opponentSymbol = 'O'; // Символ соперника
-let isMyTurn = false; // Для онлайн-режима
+let playerSymbol = 'X';
+let opponentSymbol = 'O';
+let isMyTurn = false;
+let ws = null;
+let gameId = null;
 
-// Функция установки режима игры
+// Установка режима игры
 function setMode(mode) {
     currentMode = mode;
     
@@ -19,20 +21,9 @@ function setMode(mode) {
     if (mode === 'online') {
         document.getElementById('onlineSetup').classList.remove('hidden');
     } else {
-        // Для оффлайн-режима сразу начнем игру
+        // Для оффлайн-режима сразу начинаем игру
         startGame();
     }
-}
-
-// Функция создания игры (для администратора комнаты)
-function createGame() {
-    // Генерируем случайный 6-значный ID
-    const gameId = Math.floor(100000 + Math.random() * 900000).toString();
-    document.getElementById('gameId').textContent = gameId;
-    document.getElementById('gameIdSection').classList.remove('hidden');
-    
-    // Для простоты в демо-версии сразу начинаем игру
-    startGame();
 }
 
 // Функция присоединения к игре
@@ -43,16 +34,83 @@ function joinGame() {
         return;
     }
     
-    // Для простоты в демо-версии сразу начинаем игру
-    startGame();
+    gameId = playerId;
+    
+    // Подключаемся к WebSocket
+    ws = new WebSocket('ws://localhost:8765');
+    
+    ws.onopen = function() {
+        console.log('Подключено к серверу');
+        
+        // Отправляем запрос на присоединение к игре
+        ws.send(JSON.stringify({
+            action: 'join_game',
+            game_id: gameId,
+            user_id: getUserFromUrl()
+        }));
+    };
+    
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        
+        switch(data.action) {
+            case 'game_state':
+                startOnlineGame(data);
+                break;
+            case 'update_board':
+                updateBoardState(data);
+                break;
+            case 'game_over':
+                endGame(data.winner === 'draw' ? 'Ничья!' : `${data.winner} выиграл!`);
+                break;
+        }
+    };
+    
+    ws.onclose = function() {
+        console.log('Соединение закрыто');
+    };
 }
 
-// Функция начала игры
-function startGame() {
+// Начало онлайн-игры
+function startOnlineGame(data) {
     document.getElementById('onlineSetup').classList.add('hidden');
     document.getElementById('gameBoard').classList.remove('hidden');
     
-    // Сбрасываем игровое поле
+    resetGame();
+    
+    // Устанавливаем символы игроков случайным образом
+    const isFirstPlayer = Math.random() < 0.5;
+    playerSymbol = isFirstPlayer ? 'X' : 'O';
+    opponentSymbol = isFirstPlayer ? 'O' : 'X';
+    currentPlayer = data.current_player;
+    isMyTurn = (currentPlayer === playerSymbol);
+    
+    updateStatus();
+    gameActive = true;
+}
+
+// Обновление состояния доски
+function updateBoardState(data) {
+    board = data.board;
+    currentPlayer = data.current_player;
+    
+    // Обновляем отображение ячеек
+    for (let i = 0; i < 9; i++) {
+        const cell = document.querySelector(`.cell[data-index="${i}"]`);
+        cell.textContent = board[i];
+        cell.classList.remove('x', 'o', 'occupied');
+        if (board[i]) {
+            cell.classList.add(board[i].toLowerCase(), 'occupied');
+        }
+    }
+    
+    isMyTurn = (currentPlayer === playerSymbol);
+    updateStatus();
+}
+
+// Начало оффлайн-игры
+function startGame() {
+    document.getElementById('gameBoard').classList.remove('hidden');
     resetGame();
     
     // Рандомно определяем первого игрока
@@ -61,9 +119,7 @@ function startGame() {
     playerSymbol = isFirstPlayer ? 'X' : 'O';
     opponentSymbol = isFirstPlayer ? 'O' : 'X';
     
-    // Обновляем статус
     updateStatus();
-    
     gameActive = true;
     isMyTurn = (currentPlayer === playerSymbol);
 }
@@ -132,9 +188,20 @@ function makeMove(index) {
     // Переключаем игрока
     currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
     
-    // В онлайн-режиме меняем флаг чьей очередь
+    // В онлайн-режиме меняем флаг чьей очереди
     if (currentMode === 'online') {
         isMyTurn = !isMyTurn;
+        
+        // Отправляем ход на сервер
+        ws.send(JSON.stringify({
+            action: 'make_move',
+            game_id: gameId,
+            move: {
+                index: index,
+                symbol: playerSymbol,
+                player_id: getUserFromUrl()
+            }
+        }));
     }
     
     updateStatus();
@@ -143,9 +210,9 @@ function makeMove(index) {
 // Проверка победы
 function checkWin() {
     const winPatterns = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Горизонтали
-        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Вертикали
-        [0, 4, 8], [2, 4, 6]             // Диагонали
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],  // Горизонтали
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],  // Вертикали
+        [0, 4, 8], [2, 4, 6]              // Диагонали
     ];
     
     for (const pattern of winPatterns) {
@@ -169,7 +236,7 @@ function endGame(message) {
 // Сброс игры
 function resetGame() {
     board = ['', '', '', '', '', '', '', '', ''];
-    gameActive = true;  // Теперь устанавливаем в true при начале новой игры
+    gameActive = true;
     currentPlayer = 'X';
     isMyTurn = true;
     
@@ -182,9 +249,6 @@ function resetGame() {
     
     // Скрываем модальное окно результата
     document.getElementById('resultModal').classList.add('hidden');
-    
-    // Скрываем Game ID при сбросе
-    document.getElementById('gameIdSection').classList.add('hidden');
     
     // Рандомно определяем первого игрока при новой игре
     if (currentMode === 'offline') {
@@ -204,6 +268,12 @@ function resetGame() {
 // Закрытие модального окна
 function closeModal() {
     document.getElementById('resultModal').classList.add('hidden');
+}
+
+// Получение user_id из URL
+function getUserFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('user_id');
 }
 
 // Инициализация игры при загрузке
